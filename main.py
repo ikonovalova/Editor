@@ -1,8 +1,25 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+
 import sys
 from PyQt5 import QtCore, QtGui, QtWidgets
 import json
 import os
 
+def try_except(function):
+    """
+    https://www.blog.pythonlibrary.org/2016/06/09/python-how-to-create-an-exception-logging-decorator/
+    """
+    import functools
+
+    @functools.wraps(function)
+    def wrapper(*args, **kwargs):
+        try:
+            return function(*args, **kwargs)
+        except Exception as e:
+            print("Exception in " + function.__name__ + ": " + repr(e))
+            raise
+    return wrapper
 
 # class Main(QtWidgets.QMainWindow):
 class Main(QtWidgets.QWidget):
@@ -12,13 +29,14 @@ class Main(QtWidgets.QWidget):
         super(Main,self).__init__()
 
         # Rigthr layout for json
-        self.j_tree = QtWidgets.QTextEdit()
+        # self.j_tree = QtWidgets.QTextEdit()
+        self.j_tree = QtWidgets.QTreeWidget()
         self.j_annot = QtWidgets.QTextEdit()
 
         # Left layout for text doc
         self.text_doc = QtWidgets.QPlainTextEdit()
 
-        self.filename = "", ""  # ! dluciv
+        self.filename = None
 
         self.initUI()
 
@@ -65,21 +83,27 @@ class Main(QtWidgets.QWidget):
         spawn.show()
 
 
-    def open(self):
+    def load_group_tree(self, data):
+        pass
 
+    @try_except  # если это писать перед функцией, то она перестанет вылетать молча
+    def open(self, checked):
+        print(checked)  # Этот аргумент есть у события clicked @try_except требует, чтобы все аргументы были описаны
         # Get filename and show only .txt files
-        self.filename = QtWidgets.QFileDialog.getOpenFileName(self, 'Open File', ".", " (*.txt)")
-        # Get filename without .txt
-        self.j_tree = os.path.splitext(self.filename[0])
-        # Ghange name
-        self.j_tree = self.j_tree[0] + "1.txt" , "(*.txt)"
-        #
-#Не работает чтение из второго файла
+        self.filename = QtWidgets.QFileDialog.getOpenFileName(self, 'Open File', ".", " (*.txt)")[0]
+
         if self.filename:
-            with open(self.filename[0], "r+") as file, open(self.j_tree[0], "r+") as j_file: # ! dluciv
+            # Бенчмарки всегда хранятся в файле <имя документа>.json
+            bmks_filename = self.filename + '.json'
+            with open(self.filename, "r+", encoding='utf-8') as file, open(bmks_filename, "r+", encoding='utf-8') as j_file: # ! dluciv
                 self.text_doc.setPlainText(file.read())
-                self.j_tree.setPlainText(j_file.read())
-                # json.JSONDecoder.decode()
+                data = json.load(j_file)
+
+            # for g in data["Groups"]:
+            #    print(repr(g))
+            #     self.j_tree.
+            # ... и дальше строим дерево
+            # рекомендую https://pythonspot.com/pyqt5-treeview/ ----> QStandardItemModel
 
 
 def main():
