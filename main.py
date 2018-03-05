@@ -34,7 +34,7 @@ class Main(QtWidgets.QWidget):
 #        self.j_tree = QtWidgets.QTreeWidget()
         self.j_tree = QtWidgets.QTreeView()
 
-        self.j_annot = QtWidgets.QTextEdit()
+        self.j_annot = QtWidgets.QTreeView()
 
         # Left layout for text doc
         self.text_doc = QtWidgets.QPlainTextEdit()
@@ -89,7 +89,7 @@ class Main(QtWidgets.QWidget):
     def load_group_tree(self, data):
         pass
 
-    def addItems(self, parent, elements):
+    def load_groups(self, parent, elements):
 
          for text in elements["Benchmarks"]:
              item = QtGui.QStandardItem(text["name"])
@@ -98,6 +98,18 @@ class Main(QtWidgets.QWidget):
              for test in child:
                 test1=QtGui.QStandardItem(str(test)) #читает только text  данные ?
                 # item.setChild(i,1,test1)
+                item.appendRow(test1)
+
+             self.model.appendRow(item)
+
+    def load_annot(self, parent, elements):
+
+         for text in elements["Groups"]:
+             item = QtGui.QStandardItem(text["Annotation"])
+
+             child = text["Duplicates"]
+             for test in child:
+                test1=QtGui.QStandardItem(str(test))
                 item.appendRow(test1)
 
              self.model.appendRow(item)
@@ -118,13 +130,21 @@ class Main(QtWidgets.QWidget):
                 # for g in data["Benchmarks"]:
                 #      print(g["group_ids"][0])
 
-
+                # load groups
                 self.j_tree.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
                 self.model = QtGui.QStandardItemModel()
-                self.addItems(self.model, data)
+                self.load_groups(self.model, data)
 
                 self.j_tree.setModel(self.model)
                 self.model.setHorizontalHeaderLabels([self.tr("Benchmarks")])
+
+                # load annototion
+                self.j_annot.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
+                self.model = QtGui.QStandardItemModel()
+                self.load_annot(self.model, data)
+
+                self.j_annot.setModel(self.model)
+                self.model.setHorizontalHeaderLabels([self.tr("Annotation")])
 
 
             # for g in data["Groups"]:
