@@ -1,0 +1,14 @@
+{
+  "Benchmarks": [
+    {"name":"First","annotation": "About duplicates from group 1", "group_ids":[1,2,3]
+    },
+    {"name":"Second", "annotation": "About duplicates from 2", "group_ids":[5,6,7,4]
+    },
+     {"name":"Third", "annotation": "About duplicates from 3", "group_ids":[5,5]
+    }
+  ],
+  "Groups": [
+    {"Annotation" : "gyuyuy","Duplicates" : [1,2,3]
+    }
+    ]
+}

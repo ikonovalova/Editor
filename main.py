@@ -31,7 +31,7 @@ class Main(QtWidgets.QWidget):
 
         # Rigthr layout for json
         # self.j_tree = QtWidgets.QTextEdit()
-#        self.j_tree = QtWidgets.QTreeWidget()
+        # self.j_tree = QtWidgets.QTreeWidget()
         self.j_tree = QtWidgets.QTreeView()
 
         self.j_annot = QtWidgets.QTreeView()
@@ -42,6 +42,10 @@ class Main(QtWidgets.QWidget):
         self.filename = None
 
         self.initUI()
+
+        self.data = None
+        # Open the annotation
+        self.j_tree.clicked.connect(self.openElement)
 
     def initUI(self):
         #Common Form
@@ -89,30 +93,64 @@ class Main(QtWidgets.QWidget):
     def load_group_tree(self, data):
         pass
 
-    def load_groups(self, parent, elements):
+    def load_groups(self, elements):
 
          for text in elements["Benchmarks"]:
              item = QtGui.QStandardItem(text["name"])
+             item.setData(1)
 
              child = text["group_ids"]
              for test in child:
                 test1=QtGui.QStandardItem(str(test)) #читает только text  данные ?
                 # item.setChild(i,1,test1)
                 item.appendRow(test1)
+                test1.setData(2)
 
              self.model.appendRow(item)
 
-    def load_annot(self, parent, elements):
+    @try_except
+    def openElement(self, checked):
+        print(checked)
+        # Get the index of chosen element
+        index = self.j_tree.currentIndex()
+        # Get the name of chosen element(two var-ts)
+        # item = QtCore.QModelIndex.data(index)
+        # work = self.model.data(index)
+        #
 
-         for text in elements["Groups"]:
-             item = QtGui.QStandardItem(text["Annotation"])
+        item = self.model.itemFromIndex(index)
+        # Get the data that was put in item before
+        item_data =  QtGui.QStandardItem.data(item)
+        item_text = QtGui.QStandardItem.text(item)
+        if item_data == 1:
+            # load annotation
+            self.j_annot.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
+            self.model_annot = QtGui.QStandardItemModel()
+            self.load_annot(item_text, self.data)
 
-             child = text["Duplicates"]
-             for test in child:
-                test1=QtGui.QStandardItem(str(test))
-                item.appendRow(test1)
+            self.j_annot.setModel(self.model_annot)
+            self.model_annot.setHorizontalHeaderLabels([self.tr("Annotation")])
 
-             self.model.appendRow(item)
+
+    def load_annot(self, check, elements):
+        for text in elements["Benchmarks"]:
+            elem = QtGui.QStandardItem(text["name"])
+            elem_text = QtGui.QStandardItem.text(elem)
+            if elem_text == check:
+                annot = QtGui.QStandardItem(text["annotation"])
+                self.model_annot.appendRow(annot)
+
+    # def load_annot(self, parent, elements):
+    #
+    #      for text in elements["Groups"]:
+    #          item = QtGui.QStandardItem(text["Annotation"])
+    #
+    #          child = text["Duplicates"]
+    #          for test in child:
+    #             test1=QtGui.QStandardItem(str(test))
+    #             item.appendRow(test1)
+    #
+    #          self.model.appendRow(item)
 
 
     @try_except  # если это писать перед функцией, то она перестанет вылетать молча
@@ -126,25 +164,25 @@ class Main(QtWidgets.QWidget):
             bmks_filename = self.filename + '.json'
             with open(self.filename, "r+", encoding='utf-8') as file, open(bmks_filename, "r+", encoding='utf-8') as j_file: # ! dluciv
                 self.text_doc.setPlainText(file.read())
-                data = json.load(j_file)
+                self.data = json.load(j_file)
                 # for g in data["Benchmarks"]:
                 #      print(g["group_ids"][0])
 
                 # load groups
                 self.j_tree.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
                 self.model = QtGui.QStandardItemModel()
-                self.load_groups(self.model, data)
+                self.load_groups( self.data)
 
                 self.j_tree.setModel(self.model)
                 self.model.setHorizontalHeaderLabels([self.tr("Benchmarks")])
 
                 # load annototion
-                self.j_annot.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
-                self.model = QtGui.QStandardItemModel()
-                self.load_annot(self.model, data)
+                # self.j_annot.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
+                # self.model = QtGui.QStandardItemModel()
+                # self.load_annot(self.model, data)
 
-                self.j_annot.setModel(self.model)
-                self.model.setHorizontalHeaderLabels([self.tr("Annotation")])
+                # self.j_annot.setModel(self.model)
+                # self.model.setHorizontalHeaderLabels([self.tr("Annotation")])
 
 
             # for g in data["Groups"]:
