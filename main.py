@@ -4,6 +4,8 @@
 import sys
 from PyQt5 import QtCore, QtGui, QtWidgets
 import json
+
+from TextEditor import TextEditor
 import os
 
 
@@ -37,7 +39,11 @@ class Main(QtWidgets.QWidget):
         self.j_annot = QtWidgets.QTreeView()
 
         # Left layout for text doc
-        self.text_doc = QtWidgets.QPlainTextEdit()
+        # self.text_doc = QtWidgets.QPlainTextEdit()
+        self.text_doc = TextEditor()
+        #
+        # self.text_doc.lineNumberArea = LineNumberArea(self.text_doc)
+
 
         self.filename = None
 
