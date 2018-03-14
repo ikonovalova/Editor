@@ -5,9 +5,8 @@ import sys
 from PyQt5 import QtCore, QtGui, QtWidgets
 import json
 
-from TextEditor import TextEditor
-import os
-
+from TextEditor import TextEditor #for number of line
+from NewGroup_Menu import NewGroup_Menu  #for Adding new group
 
 def try_except(function):
     """
@@ -32,26 +31,22 @@ class Main(QtWidgets.QWidget):
         super(Main,self).__init__()
 
         # Rigthr layout for json
-        # self.j_tree = QtWidgets.QTextEdit()
-        # self.j_tree = QtWidgets.QTreeWidget()
         self.j_tree = QtWidgets.QTreeView()
-
         self.j_annot = QtWidgets.QTreeView()
 
         # Left layout for text doc
         # self.text_doc = QtWidgets.QPlainTextEdit()
         self.text_doc = TextEditor()
-        #
-        # self.text_doc.lineNumberArea = LineNumberArea(self.text_doc)
-
 
         self.filename = None
+        self.bmks_filename = None
+        self.data = None
 
         self.initUI()
 
-        self.data = None
         # Open the annotation
         self.j_tree.clicked.connect(self.openElement)
+
 
     def initUI(self):
         #Common Form
@@ -86,21 +81,63 @@ class Main(QtWidgets.QWidget):
 
         self.setLayout(hbox)
 
+        # Menu by rigth click
+        self.text_doc.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
+        self.text_doc.customContextMenuRequested.connect(self.menu_my)
+
         self.setWindowTitle("Writer")
 
         self.setWindowIcon(QtGui.QIcon("icons/icon.png"))
 
-    def new(self):
 
+    # Menu by right click
+    def menu_my(self):
+        menu = QtWidgets.QMenu(self)
+
+        new_group = self.Add_Menu
+        menu.addAction("Add new group", new_group)
+            #
+        in_group = self.In_Group
+        menu.addAction("Add in current group", in_group)
+
+        menu.exec_(QtGui.QCursor.pos())
+
+    # Add new group
+    @try_except
+    def Add_Menu(self):
+        dd = self.text_doc.textCursor().selectedText() #cursor выделенное
+        qq = self.data #загруженный json
+
+        self.dialog = NewGroup_Menu( dd,qq, self.bmks_filename, self)
+        self.dialog.show()
+
+    # Add new into selected group
+    @try_except
+    def In_Group(self):
+        dd = self.text_doc.textCursor().selectedText()  # the highlighted text
+
+        for text in self.data["Benchmarks"]:
+            if text["name"] == self.item_text:
+                # index of the selected group
+                ind = self.data["Benchmarks"].index(text)
+                # insert new data into group
+                self.data["Benchmarks"][ind]["group_ids"].insert(len(text["group_ids"])+1,dd)
+                # rez = self.data["Benchmarks"][ind]["group_ids"]
+        # update the json file
+        with open(self.bmks_filename, 'w')  as fp:
+            json.dump(self.data,fp)
+        self.load_groups(self.data)
+
+
+    def new(self):
         spawn = Main(self)
         spawn.show()
-
 
     def load_group_tree(self, data):
         pass
 
     def load_groups(self, elements):
-
+         self.model.clear()
          for text in elements["Benchmarks"]:
              item = QtGui.QStandardItem(text["name"])
              item.setData(1)
@@ -127,12 +164,14 @@ class Main(QtWidgets.QWidget):
         item = self.model.itemFromIndex(index)
         # Get the data that was put in item before
         item_data =  QtGui.QStandardItem.data(item)
-        item_text = QtGui.QStandardItem.text(item)
+        # Get the name of clicked element
+        self.item_text = QtGui.QStandardItem.text(item)
+
         if item_data == 1:
             # load annotation
             self.j_annot.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
             self.model_annot = QtGui.QStandardItemModel()
-            self.load_annot(item_text, self.data)
+            self.load_annot(self.item_text, self.data)
 
             self.j_annot.setModel(self.model_annot)
             self.model_annot.setHorizontalHeaderLabels([self.tr("Annotation")])
@@ -167,12 +206,10 @@ class Main(QtWidgets.QWidget):
 
         if self.filename:
             # Бенчмарки всегда хранятся в файле <имя документа>.json
-            bmks_filename = self.filename + '.json'
-            with open(self.filename, "r+", encoding='utf-8') as file, open(bmks_filename, "r+", encoding='utf-8') as j_file: # ! dluciv
+            self.bmks_filename = self.filename + '.json'
+            with open(self.filename, "r+", encoding='utf-8') as file, open(self.bmks_filename, "r+", encoding='utf-8') as j_file: # ! dluciv
                 self.text_doc.setPlainText(file.read())
                 self.data = json.load(j_file)
-                # for g in data["Benchmarks"]:
-                #      print(g["group_ids"][0])
 
                 # load groups
                 self.j_tree.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
@@ -181,14 +218,6 @@ class Main(QtWidgets.QWidget):
 
                 self.j_tree.setModel(self.model)
                 self.model.setHorizontalHeaderLabels([self.tr("Benchmarks")])
-
-                # load annototion
-                # self.j_annot.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
-                # self.model = QtGui.QStandardItemModel()
-                # self.load_annot(self.model, data)
-
-                # self.j_annot.setModel(self.model)
-                # self.model.setHorizontalHeaderLabels([self.tr("Annotation")])
 
 
             # for g in data["Groups"]:
