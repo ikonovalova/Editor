@@ -20,11 +20,13 @@ def try_except(function):
 
 # Add the new selected group into the json file
 class NewGroup_Menu(QtWidgets.QWidget):
-    def __init__(self, cursor_data, loaded_data, path, parent):
+    def __init__(self, cursor_data, loaded_data, path, start_elem, end_elem, parent):
         super().__init__()
         self.cursor_data  =  cursor_data
         self.data = loaded_data #json
         self.path = path  #current file
+        self.start_elem = start_elem #the first selected element
+        self.end_elem = end_elem #the last selected element
         self.parent = parent
         self.setWindowTitle("Add new group")
         vbox = QtWidgets.QVBoxLayout(self)
@@ -53,10 +55,15 @@ class NewGroup_Menu(QtWidgets.QWidget):
         new_data ={}
         new_data["name"] = self.cursor_data
         new_data["annotation"] = self.annot_text.text()
-        new_data["group_ids"]= []
+        new_data["group_ids"] = []
         new_add = new_data["group_ids"]
 
         new_add.insert(len(new_add)+1,self.cursor_data)
+
+        new_data["position"] = []
+        add_pos = new_data["position"]
+        add_pos.insert(0, self.start_elem)
+        add_pos.insert(1,self.end_elem)
         self.data["Benchmarks"].append(new_data)
 
         with open(self.path, 'w')  as fp:

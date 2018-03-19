@@ -46,6 +46,8 @@ class Main(QtWidgets.QWidget):
 
         # Open the annotation
         self.j_tree.clicked.connect(self.openElement)
+    # Show cursor pos
+        self.j_tree.clicked.connect(self.load_cursorPos)
 
 
     def initUI(self):
@@ -106,9 +108,11 @@ class Main(QtWidgets.QWidget):
     @try_except
     def Add_Menu(self):
         dd = self.text_doc.textCursor().selectedText() #cursor выделенное
+        start_elem = self.text_doc.textCursor().selectionStart() #the number of the first element of the selected text
+        end_elem = self.text_doc.textCursor().selectionEnd() #the number of the last element of the selected text
         qq = self.data #загруженный json
 
-        self.dialog = NewGroup_Menu( dd,qq, self.bmks_filename, self)
+        self.dialog = NewGroup_Menu( dd,qq, self.bmks_filename, start_elem, end_elem, self)
         self.dialog.show()
 
     # Add new into selected group
@@ -184,6 +188,44 @@ class Main(QtWidgets.QWidget):
             if elem_text == check:
                 annot = QtGui.QStandardItem(text["annotation"])
                 self.model_annot.appendRow(annot)
+
+    @try_except
+    def load_cursorPos(self, checked):
+        print(checked)
+        elements = self.data
+        check = self.item_text
+
+        index = self.j_tree.currentIndex()
+        item = self.model.itemFromIndex(index)
+        item_data =  QtGui.QStandardItem.data(item)
+        self.item_text = QtGui.QStandardItem.text(item)
+
+        for text in elements["Benchmarks"]:
+            if item_data == 2:
+                for el in text["group_ids"]:
+                    if el == check:
+                        pos = text["position"]
+                        start = pos[0]
+                        end = pos[1]
+                        # length = end - start
+
+                        c = self.text_doc.textCursor()
+                        c.setPosition(start)
+                        c.setPosition(end, QtGui.QTextCursor.KeepAnchor)
+
+                        extraSelections = []
+                        selection = QtWidgets.QTextEdit.ExtraSelection()
+                        lineColor = QtGui.QColor(QtCore.Qt.red).lighter(160)
+                        selection.format.setBackground(lineColor)
+                        selection.cursor = c
+                        # sdf = selection.cursor.selectedText()
+                        # print(sdf)
+
+                        extraSelections.append(selection)
+                        self.text_doc.setExtraSelections(extraSelections)
+
+
+
 
     # def load_annot(self, parent, elements):
     #
