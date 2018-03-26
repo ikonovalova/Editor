@@ -7,6 +7,7 @@ import json
 
 from TextEditor import TextEditor #for number of line
 from NewGroup_Menu import NewGroup_Menu  #for Adding new group
+from docx import Document #for dock files
 
 def try_except(function):
     """
@@ -46,20 +47,13 @@ class Main(QtWidgets.QWidget):
 
         # Open the annotation
         self.j_tree.clicked.connect(self.openElement)
-    # Show cursor pos
+        # Show cursor pos
         self.j_tree.clicked.connect(self.load_cursorPos)
 
-
+    @try_except
     def initUI(self):
         #Common Form
         hbox = QtWidgets.QVBoxLayout()
-
-        # Rigthr layout for json
-        # j_tree = QtWidgets.QTextEdit()
-        # j_annot = QtWidgets.QTextEdit()
-
-        # Left layout for text doc
-        #  text_doc = QtWidgets.QTextEdit()
 
         # Create a vert. splitter
         splitter1 = QtWidgets.QSplitter(QtCore.Qt.Vertical)
@@ -98,9 +92,8 @@ class Main(QtWidgets.QWidget):
 
         new_group = self.Add_Menu
         menu.addAction("Add new group", new_group)
-            #
-        in_group = self.In_Group
-        menu.addAction("Add in current group", in_group)
+        to_group = self.To_Group
+        menu.addAction("Add to current group", to_group)
 
         menu.exec_(QtGui.QCursor.pos())
 
@@ -117,16 +110,25 @@ class Main(QtWidgets.QWidget):
 
     # Add new into selected group
     @try_except
-    def In_Group(self):
+    def To_Group(self):
         dd = self.text_doc.textCursor().selectedText()  # the highlighted text
+        start_elem = self.text_doc.textCursor().selectionStart()  # the number of the first element of the selected text
+        end_elem = self.text_doc.textCursor().selectionEnd()  # the number of the last element of the selected text
 
         for text in self.data["Benchmarks"]:
-            if text["name"] == self.item_text:
+            if text["name"] == self.item_data[1]:
                 # index of the selected group
                 ind = self.data["Benchmarks"].index(text)
                 # insert new data into group
-                self.data["Benchmarks"][ind]["group_ids"].insert(len(text["group_ids"])+1,dd)
-                # rez = self.data["Benchmarks"][ind]["group_ids"]
+                new_d = {}
+                new_d["name2"] = dd
+                new_d["position"] = []
+                add_pos = new_d["position"]
+                add_pos.insert(0, start_elem)
+                add_pos.insert(1, end_elem)
+
+                self.data["Benchmarks"][ind]["group_ids"].insert(len(text["group_ids"])+1,new_d)
+
         # update the json file
         with open(self.bmks_filename, 'w')  as fp:
             json.dump(self.data,fp)
@@ -140,18 +142,21 @@ class Main(QtWidgets.QWidget):
     def load_group_tree(self, data):
         pass
 
+    @try_except
     def load_groups(self, elements):
          self.model.clear()
          for text in elements["Benchmarks"]:
-             item = QtGui.QStandardItem(text["name"])
-             item.setData(1)
+             # item = QtGui.QStandardItem(text["name"])
+             item = QtGui.QStandardItem(text["annotation"])
+             item.setData([1,text["name"]])
 
              child = text["group_ids"]
              for test in child:
-                test1=QtGui.QStandardItem(str(test)) #читает только text  данные ?
+                new_elem = test["name2"]
+                test1=QtGui.QStandardItem(str(new_elem[0:50])) #читает только text  данные ?
                 # item.setChild(i,1,test1)
                 item.appendRow(test1)
-                test1.setData(2)
+                test1.setData([2,0])
 
              self.model.appendRow(item)
 
@@ -167,15 +172,16 @@ class Main(QtWidgets.QWidget):
 
         item = self.model.itemFromIndex(index)
         # Get the data that was put in item before
-        item_data =  QtGui.QStandardItem.data(item)
+        self.item_data =  QtGui.QStandardItem.data(item)
         # Get the name of clicked element
         self.item_text = QtGui.QStandardItem.text(item)
 
-        if item_data == 1:
+        if self.item_data[0] == 1:
             # load annotation
             self.j_annot.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
             self.model_annot = QtGui.QStandardItemModel()
-            self.load_annot(self.item_text, self.data)
+            # self.load_annot(self.item_text, self.data)
+            self.load_annot(self.item_data[1], self.data)
 
             self.j_annot.setModel(self.model_annot)
             self.model_annot.setHorizontalHeaderLabels([self.tr("Annotation")])
@@ -183,11 +189,12 @@ class Main(QtWidgets.QWidget):
 
     def load_annot(self, check, elements):
         for text in elements["Benchmarks"]:
-            elem = QtGui.QStandardItem(text["name"])
+            elem = QtGui.QStandardItem(str(text["name"]))
             elem_text = QtGui.QStandardItem.text(elem)
             if elem_text == check:
                 annot = QtGui.QStandardItem(text["annotation"])
                 self.model_annot.appendRow(annot)
+
 
     @try_except
     def load_cursorPos(self, checked):
@@ -201,10 +208,10 @@ class Main(QtWidgets.QWidget):
         self.item_text = QtGui.QStandardItem.text(item)
 
         for text in elements["Benchmarks"]:
-            if item_data == 2:
+            if item_data[0] == 2:
                 for el in text["group_ids"]:
-                    if el == check:
-                        pos = text["position"]
+                    if el["name2"] == check:
+                        pos = el["position"]
                         start = pos[0]
                         end = pos[1]
                         # length = end - start
@@ -218,26 +225,10 @@ class Main(QtWidgets.QWidget):
                         lineColor = QtGui.QColor(QtCore.Qt.red).lighter(160)
                         selection.format.setBackground(lineColor)
                         selection.cursor = c
-                        # sdf = selection.cursor.selectedText()
-                        # print(sdf)
 
                         extraSelections.append(selection)
                         self.text_doc.setExtraSelections(extraSelections)
 
-
-
-
-    # def load_annot(self, parent, elements):
-    #
-    #      for text in elements["Groups"]:
-    #          item = QtGui.QStandardItem(text["Annotation"])
-    #
-    #          child = text["Duplicates"]
-    #          for test in child:
-    #             test1=QtGui.QStandardItem(str(test))
-    #             item.appendRow(test1)
-    #
-    #          self.model.appendRow(item)
 
 
     @try_except  # если это писать перед функцией, то она перестанет вылетать молча
