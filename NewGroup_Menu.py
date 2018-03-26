@@ -42,7 +42,8 @@ class NewGroup_Menu(QtWidgets.QWidget):
         # annot_text = QtWidgets.QPlainTextEdit()
         descr_text = QtWidgets.QLabel("Write annotation for the group")
         descr_text.setFixedSize(200,50)
-        self.annot_text = QtWidgets.QLineEdit()
+        # self.annot_text = QtWidgets.QLineEdit()
+        self.annot_text = QtWidgets.QPlainTextEdit()
 
         vbox.addWidget(descr_text)
         vbox.addWidget(self.annot_text)
@@ -53,17 +54,28 @@ class NewGroup_Menu(QtWidgets.QWidget):
     def add_newGroup(self, checked):
         print(checked)
         new_data ={}
-        new_data["name"] = self.cursor_data
-        new_data["annotation"] = self.annot_text.text()
+        # new_data["name"] = self.cursor_data
+        count_elem = len(self.data["Benchmarks"]) + 1
+        new_data["name"] = str(count_elem)
+
+        new_data["annotation"] = self.annot_text.toPlainText()
+        # new_data["group_ids"] = []
         new_data["group_ids"] = []
-        new_add = new_data["group_ids"]
-
-        new_add.insert(len(new_add)+1,self.cursor_data)
-
-        new_data["position"] = []
-        add_pos = new_data["position"]
+        new_we = {}
+        new_we["name2"] = self.cursor_data
+        new_we["position"] = []
+        # new_add = new_data["group_ids"]
+        #
+        # new_add.insert(len(new_add)+1,self.cursor_data)
+        #
+        # new_data["position"] = []
+        # add_pos = new_data["position"]
+        add_pos = new_we["position"]
         add_pos.insert(0, self.start_elem)
         add_pos.insert(1,self.end_elem)
+        #
+        new_data["group_ids"].append(new_we)
+        #
         self.data["Benchmarks"].append(new_data)
 
         with open(self.path, 'w')  as fp:
