@@ -78,9 +78,6 @@ class NewGroup_Menu(QtWidgets.QWidget):
         #
         self.data["Benchmarks"].append(new_data)
 
-        with open(self.path, 'w')  as fp:
-            json.dump(self.data,fp)
-
-        # upload j_tree
+        self.parent.update_json_file(self.path, self.data)
         self.parent.load_groups( self.parent.data)
         self.close()

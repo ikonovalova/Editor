@@ -1,7 +1,5 @@
-import sys
 from PyQt5 import QtCore, QtGui, QtWidgets
 
-import numpy as np
 
 def try_except(function):
     """
@@ -42,14 +40,13 @@ class TextEditor(QtWidgets.QPlainTextEdit):
 
         self.blockCountChanged.connect(self.updateLineNumberAreaWidth)
         self.updateRequest.connect(self.updateLineNumberArea)
-        self.cursorPositionChanged.connect(self.highlightCurrentLine)
+        # self.cursorPositionChanged.connect(self.highlightCurrentLine)
 
         self.updateLineNumberAreaWidth(0)
 
     @try_except
     def lineNumberAreaWidth(self):
         digits = 1
-
 
         count = max(1, self.blockCount())
         while count >= 10:
@@ -62,9 +59,7 @@ class TextEditor(QtWidgets.QPlainTextEdit):
     def updateLineNumberAreaWidth(self, _):
         self.setViewportMargins(self.lineNumberAreaWidth(), 0, 0, 0)
 
-
     def updateLineNumberArea(self, rect, dy):
-
 
         if dy:
             self.lineNumberArea.scroll(0, dy)
@@ -75,19 +70,16 @@ class TextEditor(QtWidgets.QPlainTextEdit):
         if rect.contains(self.viewport().rect()):
             self.updateLineNumberAreaWidth(0)
 
-
     def resizeEvent(self, event):
         super().resizeEvent(event)
 
-
-        cr = self.contentsRect();
+        cr = self.contentsRect()
         self.lineNumberArea.setGeometry(QtCore.QRect(cr.left(), cr.top(),
                                              self.lineNumberAreaWidth(), cr.height()))
 
     @try_except
     def lineNumberAreaPaintEvent(self, event):
         mypainter = QtGui.QPainter(self.lineNumberArea)
-
 
         mypainter.fillRect(event.rect(), QtCore.Qt.lightGray)
 
@@ -110,20 +102,20 @@ class TextEditor(QtWidgets.QPlainTextEdit):
             bottom = top + self.blockBoundingRect(block).height()
             blockNumber += 1
 
-    @try_except
-    def highlightCurrentLine(self):
-        extraSelections = []
-
-
-        if not self.isReadOnly():
-            selection = QtWidgets.QTextEdit.ExtraSelection()
-
-            lineColor = QtGui.QColor(QtCore.Qt.yellow).lighter(160)
-
-            selection.format.setBackground(lineColor)
-            selection.format.setProperty(QtGui.QTextFormat.FullWidthSelection, True)
-            selection.cursor = self.textCursor()
-            selection.cursor.clearSelection()
-            extraSelections.append(selection)
-        self.setExtraSelections(extraSelections)
+    # @try_except
+    # def highlightCurrentLine(self):
+    #     extraSelections = []
+    #
+    #
+    #     if not self.isReadOnly():
+    #         selection = QtWidgets.QTextEdit.ExtraSelection()
+    #
+    #         lineColor = QtGui.QColor(QtCore.Qt.yellow).lighter(160)
+    #
+    #         selection.format.setBackground(lineColor)
+    #         selection.format.setProperty(QtGui.QTextFormat.FullWidthSelection, True)
+    #         selection.cursor = self.textCursor()
+    #         selection.cursor.clearSelection()
+    #         extraSelections.append(selection)
+    #     self.setExtraSelections(extraSelections)
 
