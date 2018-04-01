@@ -44,9 +44,6 @@ class Find(QtWidgets.QDialog):
         # Case Sensitivity option
         self.caseSens = QtWidgets.QCheckBox("Case sensitive", self)
 
-        # Whole Words option
-        # self.wholeWords = QtWidgets.QCheckBox("Whole words",self)
-
         # Layout the objects on the screen
         layout = QtWidgets.QGridLayout()
 
@@ -73,11 +70,6 @@ class Find(QtWidgets.QDialog):
 
         # And the text to find
         query = self.findField.toPlainText()
-
-        # If the 'Whole Words' checkbox is checked, we need to append
-        # and prepend a non-alphanumeric character
-  #      if self.wholeWords.isChecked():
-  #         query = r'\W' + query + r'\W'
 
         # By default regexes are case sensitive but usually a search isn't
         # case sensitive by default, so we need to switch this around here

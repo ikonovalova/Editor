@@ -2,10 +2,8 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 
 
 class Highlighter:
-
+    # For text highlighting
     def highlightText(self, start, end, lineColor):
-        # For text highlighting
-
         # colorFormat =  QtGui.QTextCharFormat()
         # colorFormat.setBackground(QtGui.QColor(QtCore.Qt.green).lighter(160))
 
