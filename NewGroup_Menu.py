@@ -59,23 +59,21 @@ class NewGroup_Menu(QtWidgets.QWidget):
         new_data["name"] = str(count_elem)
 
         new_data["annotation"] = self.annot_text.toPlainText()
-        # new_data["group_ids"] = []
+
         new_data["group_ids"] = []
         new_we = {}
         new_we["name2"] = self.cursor_data
+
+        count_dupl  = sum(len(dupl["group_ids"]) for dupl in self.data["Benchmarks"]) + 1
+        new_we["id_dupl"] = count_dupl
+
         new_we["position"] = []
-        # new_add = new_data["group_ids"]
-        #
-        # new_add.insert(len(new_add)+1,self.cursor_data)
-        #
-        # new_data["position"] = []
-        # add_pos = new_data["position"]
         add_pos = new_we["position"]
         add_pos.insert(0, self.start_elem)
         add_pos.insert(1,self.end_elem)
-        #
+
         new_data["group_ids"].append(new_we)
-        #
+
         self.data["Benchmarks"].append(new_data)
 
         self.parent.update_json_file(self.path, self.data)

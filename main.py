@@ -132,6 +132,10 @@ class Main(QtWidgets.QWidget):
                 # insert new data into group
                 new_d = {}
                 new_d["name2"] = dd
+
+                count_dupl = sum(len(dupl["group_ids"]) for dupl in self.data["Benchmarks"]) + 1
+                new_d["id_dupl"] = count_dupl
+
                 new_d["position"] = []
                 add_pos = new_d["position"]
                 add_pos.insert(0, start_elem)
@@ -150,6 +154,7 @@ class Main(QtWidgets.QWidget):
     @try_except
     def load_groups(self, elements):
         self.model.clear()
+
         for text in elements["Benchmarks"]:
             # item = QtGui.QStandardItem(text["name"])
             item = QtGui.QStandardItem(text["annotation"])
@@ -159,9 +164,9 @@ class Main(QtWidgets.QWidget):
             for test in child:
                 new_elem = test["name2"]
                 test1 = QtGui.QStandardItem(str(new_elem[0: 50]))  # читает только text  данные ?
-                # item.setChild(i,1,test1)
+
                 item.appendRow(test1)
-                test1.setData([2, 0, new_elem])
+                test1.setData([2, 0, test["id_dupl"]])
 
             self.model.appendRow(item)
             self.model.setHorizontalHeaderLabels([self.tr("Benchmarks")])
@@ -174,7 +179,6 @@ class Main(QtWidgets.QWidget):
         # Get the name of chosen element(two var-ts)
         # item = QtCore.QModelIndex.data(index)
         # work = self.model.data(index)
-        #
 
         item = self.model.itemFromIndex(index)
         # Get the data that was put in item before
@@ -205,7 +209,6 @@ class Main(QtWidgets.QWidget):
     def load_cursorPos(self, checked):
         print(checked)
         elements = self.data
-        # check = self.item_text
         check = self.item_data[2]
 
         index = self.j_tree.currentIndex()
@@ -216,7 +219,7 @@ class Main(QtWidgets.QWidget):
         for text in elements["Benchmarks"]:
             if item_data[0] == 2:
                 for el in text["group_ids"]:
-                    if el["name2"] == check:
+                    if el["id_dupl"] == check:
                         pos = el["position"]
                         start = pos[0]
                         end = pos[1]
