@@ -93,7 +93,7 @@ class Main(QtWidgets.QWidget):
         self.text_doc.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
         self.text_doc.customContextMenuRequested.connect(self.menu_my)
 
-        self.setWindowTitle("Writer")
+        self.setWindowTitle("Benchmark")
 
         self.setWindowIcon(QtGui.QIcon("icons/icon.png"))
 
