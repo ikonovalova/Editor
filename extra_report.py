@@ -42,8 +42,6 @@ def perform(clones: 'module', candidates: 'list[clones.VariativeElement]', lgr: 
 
     data = {}
     data["Benchmarks"] = []
-    # для проверки правильности элемент при поиске
-    # h = 0
 
     with open(save_filename, 'w', encoding = 'utf-8') as fp:
         count_dupl = 0 # Number of clone in the file
@@ -51,7 +49,6 @@ def perform(clones: 'module', candidates: 'list[clones.VariativeElement]', lgr: 
             number_clones = 0 # Number of clone in a group
 
             new_data = {}
-
             count_elem = len(data["Benchmarks"]) + 1
             new_data["name"] = str(count_elem)
 
@@ -62,14 +59,11 @@ def perform(clones: 'module', candidates: 'list[clones.VariativeElement]', lgr: 
             while number_clones < len(g.clone_groups[0].instances):
 
                 start = g.clone_groups[0].instances[number_clones][1]
-                start_point = start_point + str(start) + " "
                 end = g.clone_groups[0].instances[number_clones][2]
-                end_point = end_point + str(end) + " "
                 number_clones = number_clones + 1
 
                 new_we = {}
                 new_we["name2"] = str(count_dupl)
-                # h = h + 1
                 count_dupl = count_dupl + 1
                 new_we["id_dupl"] = count_dupl
                 new_we["position"] = []
