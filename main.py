@@ -2,6 +2,8 @@
 # -*- coding: utf-8 -*-
 
 import sys
+
+import os
 from PyQt5 import QtCore, QtGui, QtWidgets
 import json
 
@@ -65,6 +67,7 @@ class Main(QtWidgets.QWidget):
     def initUI(self):
         # Common Form
         hbox = QtWidgets.QVBoxLayout()
+        bbox = QtWidgets.QHBoxLayout()
 
         # Create a vert. splitter
         splitter1 = QtWidgets.QSplitter(QtCore.Qt.Vertical)
@@ -80,12 +83,20 @@ class Main(QtWidgets.QWidget):
         # Create an open button
         open_btn = QtWidgets.QPushButton("Open", self)
         open_btn.setFixedSize(100, 30)
+        report_btn = QtWidgets.QPushButton("Report", self)
+        report_btn.setFixedSize(100, 30)
 
         # Connection
         open_btn.clicked.connect(self.open)
+        report_btn.clicked.connect(self.report)
 
-        hbox.addWidget(open_btn)
+        bbox.addWidget(open_btn)
+        bbox.addWidget(report_btn)
+
+        hbox.addLayout(bbox)
         hbox.addWidget(splitter2)
+
+
 
         self.setLayout(hbox)
 
@@ -249,6 +260,23 @@ class Main(QtWidgets.QWidget):
                 self.j_tree.setModel(self.model)
                 self.model.setHorizontalHeaderLabels([self.tr("Benchmarks")])
 
+    @try_except  # если это писать перед функцией, то она перестанет вылетать молча
+    def report(self, checked):
+        import subprocess
+        def fixsep(path):
+            return path.replace("\\", os.path.sep).replace("/", os.path.sep)
+
+        fc2h = os.path.join(
+            os.path.dirname(os.path.realpath(__file__)),
+            "df_visual_report", "fuzzyclones2html.py"
+        )
+
+        subprocess.Popen([
+            sys.executable, fc2h,
+            '-jfrm', 'bench', '-ob', 'True',
+            '-sx', fixsep(os.path.abspath(self.filename)),
+            '-ndgj', fixsep(os.path.abspath(self.filename) + ".json")
+        ])
 
 def main():
     app = QtWidgets.QApplication(sys.argv)
