@@ -11,6 +11,7 @@ from TextEditor import TextEditor  # for number of line
 from NewGroup_Menu import NewGroup_Menu  # for Adding new group
 from find import Find  # for find user text
 from highlighter import Highlighter  # for colored cursor text
+from Analysis import Analysis # for analysis duplicates
 
 
 def try_except(function):
@@ -33,21 +34,19 @@ def try_except(function):
 class Main(QtWidgets.QWidget):
 
     def __init__(self, parent=None):
-        # QtWidgets.QMainWindow.__init__(self, parent)
         super(Main, self).__init__()
 
         # Right layout for json
         self.j_tree = QtWidgets.QTreeView()
-        # self.j_annot = QtWidgets.QTreeView()
         self.j_annot = QtWidgets.QPlainTextEdit()
 
         # Left layout for text doc
-        # self.text_doc = QtWidgets.QPlainTextEdit()
         self.text_doc = TextEditor()
 
         self.filename = None
         self.bmks_filename = None
         self.data = None
+        self.report_data = None
 
         self.initUI()
 
@@ -85,26 +84,32 @@ class Main(QtWidgets.QWidget):
         open_btn.setFixedSize(100, 30)
         report_btn = QtWidgets.QPushButton("Report", self)
         report_btn.setFixedSize(100, 30)
+        analysis_btn = QtWidgets.QPushButton("Analysis", self)
+        analysis_btn.setFixedSize(100, 30)
 
         # Connection
         open_btn.clicked.connect(self.open)
         report_btn.clicked.connect(self.report)
+        analysis_btn.clicked.connect(self.analysis)
 
         bbox.addWidget(open_btn)
         bbox.addWidget(report_btn)
+        bbox.addWidget(analysis_btn)
 
         hbox.addLayout(bbox)
         hbox.addWidget(splitter2)
 
-
-
         self.setLayout(hbox)
 
-        # Menu by right click
+        # Menu by right click for adding elements
         self.text_doc.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
         self.text_doc.customContextMenuRequested.connect(self.menu_my)
 
-        self.setWindowTitle("Benchmark")
+        # Menu by right click for deleting elements
+        self.j_tree.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
+        self.j_tree.customContextMenuRequested.connect(self.delete_menu_my)
+
+        self.setWindowTitle("Benchmark collection")
 
         self.setWindowIcon(QtGui.QIcon("icons/icon.png"))
 
@@ -119,6 +124,36 @@ class Main(QtWidgets.QWidget):
 
         menu.exec_(QtGui.QCursor.pos())
 
+    @try_except
+    def delete_menu_my(self, checked):
+        print(checked)
+        menu = QtWidgets.QMenu(self)
+        if self.item_data[0] == 1 :
+            delete_group = self.delete_group
+            menu.addAction("Delete group", delete_group)
+        if self.item_data[0] == 2:
+            delete_duplicate = self.delete_duplicate
+            menu.addAction("Delete duplicate", delete_duplicate)
+
+        menu.exec_(QtGui.QCursor.pos())
+
+    @try_except
+    def delete_group(self):
+        chosen = self.item_data[1]
+        del self.data["Benchmarks"][int(chosen)]
+
+        self.update_json_file(self.bmks_filename, self.data)
+        self.load_groups(self.data)
+
+
+    @try_except
+    def delete_duplicate(self):
+        chosen_group = self.item_data[4]
+        chosen_dupl = self.item_data[1]
+        del self.data["Benchmarks"][int(chosen_group)]["group_ids"][int(chosen_dupl)]
+        self.update_json_file(self.bmks_filename, self.data)
+        self.load_groups(self.data)
+
     # Add new group
     @try_except
     def add_Menu(self):
@@ -129,6 +164,7 @@ class Main(QtWidgets.QWidget):
         self.dialog = NewGroup_Menu(dd, self.data, self.bmks_filename, start_elem, end_elem, self)
         self.dialog.show()
 
+
     # Add new into selected group
     @try_except
     def To_Group(self):
@@ -136,23 +172,18 @@ class Main(QtWidgets.QWidget):
         start_elem = self.text_doc.textCursor().selectionStart()  # the number of the first element of the selected text
         end_elem = self.text_doc.textCursor().selectionEnd()  # the number of the last element of the selected text
 
-        for text in self.data["Benchmarks"]:
-            if text["name"] == self.item_data[1]:
-                # index of the selected group
-                ind = self.data["Benchmarks"].index(text)
-                # insert new data into group
-                new_d = {}
-                new_d["name2"] = dd
+        new_d = {}
+        new_d["name2"] = dd
 
-                count_dupl = sum(len(dupl["group_ids"]) for dupl in self.data["Benchmarks"]) + 1
-                new_d["id_dupl"] = count_dupl
+        count_dupl = sum(len(dupl["group_ids"]) for dupl in self.data["Benchmarks"]) + 1
+        new_d["id_dupl"] = count_dupl
 
-                new_d["position"] = []
-                add_pos = new_d["position"]
-                add_pos.insert(0, start_elem)
-                add_pos.insert(1, end_elem)
+        new_d["position"] = []
+        add_pos = new_d["position"]
+        add_pos.insert(0, start_elem)
+        add_pos.insert(1, end_elem)
 
-                self.data["Benchmarks"][ind]["group_ids"].insert(len(text["group_ids"])+1, new_d)
+        self.data["Benchmarks"][self.item_data[1]]["group_ids"].insert(0,new_d)
 
         self.update_json_file(self.bmks_filename, self.data)
         self.load_groups(self.data)
@@ -165,19 +196,27 @@ class Main(QtWidgets.QWidget):
     @try_except
     def load_groups(self, elements):
         self.model.clear()
+        group_id = 0
 
         for text in elements["Benchmarks"]:
-            # item = QtGui.QStandardItem(text["name"])
             item = QtGui.QStandardItem(text["annotation"])
-            item.setData([1, text["name"], 0])
+            item.setData([1, group_id, text["annotation"]]) # meanings: 1 - group; 2 - id of group; 3 - annotation
+
+            dupl_id = 0
 
             child = text["group_ids"]
             for test in child:
                 new_elem = test["name2"]
-                test1 = QtGui.QStandardItem(str(new_elem[0: 50]))  # читает только text  данные ?
+                test1 = QtGui.QStandardItem(str(new_elem[0: 50]))
 
                 item.appendRow(test1)
-                test1.setData([2, 0, test["id_dupl"]])
+                pos = test["position"]
+                # meanings: 1 - duplicate; 2 - id of group; 3- id of duplicate; 4 - annotation;
+                # 5 - start pos; 6 - end pos
+                test1.setData([2, dupl_id, pos[0], pos[1], group_id])
+                dupl_id = dupl_id + 1
+
+            group_id = group_id + 1
 
             self.model.appendRow(item)
             self.model.setHorizontalHeaderLabels([self.tr("Benchmarks")])
@@ -187,9 +226,6 @@ class Main(QtWidgets.QWidget):
         print(checked)
         # Get the index of chosen element
         index = self.j_tree.currentIndex()
-        # Get the name of chosen element(two var-ts)
-        # item = QtCore.QModelIndex.data(index)
-        # work = self.model.data(index)
 
         item = self.model.itemFromIndex(index)
         # Get the data that was put in item before
@@ -198,48 +234,17 @@ class Main(QtWidgets.QWidget):
         self.item_text = QtGui.QStandardItem.text(item)
 
         if self.item_data[0] == 1:
-            # load annotation
-           # self.j_annot.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
-           # self.model_annot = QtGui.QStandardItemModel()
-            # self.load_annot(self.item_text, self.data)
-            self.load_annot(self.item_data[1], self.data)
-
-           # self.j_annot.setModel(self.model_annot)
-           # self.model_annot.setHorizontalHeaderLabels([self.tr("Annotation")])
-
-    def load_annot(self, check, elements):
-        for text in elements["Benchmarks"]:
-            elem = QtGui.QStandardItem(str(text["name"]))
-            elem_text = QtGui.QStandardItem.text(elem)
-            if elem_text == check:
-                # annot = QtGui.QStandardItem(text["annotation"])
-                # self.model_annot.appendRow(annot)
-                self.j_annot.setPlainText(text["annotation"])
+            self.j_annot.setPlainText(self.item_data[2])
 
     @try_except
     def load_cursorPos(self, checked):
         print(checked)
-        elements = self.data
-        check = self.item_data[2]
+        if self.item_data[0] == 2:
+            lineColor = QtGui.QColor(QtCore.Qt.red).lighter(160)
+            Highlighter.highlightText(self.text_doc, self.item_data[2], self.item_data[3], lineColor)
 
-        index = self.j_tree.currentIndex()
-        item = self.model.itemFromIndex(index)
-        item_data = QtGui.QStandardItem.data(item)
-        self.item_text = QtGui.QStandardItem.text(item)
 
-        for text in elements["Benchmarks"]:
-            if item_data[0] == 2:
-                for el in text["group_ids"]:
-                    if el["id_dupl"] == check:
-                        pos = el["position"]
-                        start = pos[0]
-                        end = pos[1]
-                        # length = end - start
-
-                        lineColor = QtGui.QColor(QtCore.Qt.red).lighter(160)
-                        Highlighter.highlightText(self.text_doc, start, end, lineColor)
-
-    @try_except  # если это писать перед функцией, то она перестанет вылетать молча
+    @try_except
     def open(self, checked):
         print(checked)  # Этот аргумент есть у события clicked @try_except требует, чтобы все аргументы были описаны
         # Get filename and show only .txt files
@@ -248,7 +253,7 @@ class Main(QtWidgets.QWidget):
         if self.filename:
             # Бенчмарки всегда хранятся в файле <имя документа>.json
             self.bmks_filename = self.filename + '.json'
-            with open(self.filename, "r+", encoding='utf-8') as file, open(self.bmks_filename, "r+", encoding='utf-8') as j_file:  # ! dluciv
+            with open(self.filename, "r+", encoding='utf-8') as file, open(self.bmks_filename, "r+", encoding='utf-8') as j_file:
                 self.text_doc.setPlainText(file.read())
                 self.data = json.load(j_file)
 
@@ -260,7 +265,7 @@ class Main(QtWidgets.QWidget):
                 self.j_tree.setModel(self.model)
                 self.model.setHorizontalHeaderLabels([self.tr("Benchmarks")])
 
-    @try_except  # если это писать перед функцией, то она перестанет вылетать молча
+    @try_except
     def report(self, checked):
         import subprocess
         def fixsep(path):
@@ -277,6 +282,11 @@ class Main(QtWidgets.QWidget):
             '-sx', fixsep(os.path.abspath(self.filename)),
             '-ndgj', fixsep(os.path.abspath(self.filename) + ".json")
         ])
+
+    @try_except
+    def analysis(self, checked):
+        self.dialog = Analysis(self.data, self.filename, self)
+        self.dialog.show()
 
 def main():
     app = QtWidgets.QApplication(sys.argv)
