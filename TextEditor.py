@@ -88,7 +88,6 @@ class TextEditor(QtWidgets.QPlainTextEdit):
         top = self.blockBoundingGeometry(block).translated(self.contentOffset()).top()
         bottom = top + self.blockBoundingRect(block).height()
 
-        # Just to make sure I use the right font
         height = self.fontMetrics().height()
         while block.isValid() and (top <= event.rect().bottom()):
             if block.isVisible() and (bottom >= event.rect().top()):
@@ -101,21 +100,4 @@ class TextEditor(QtWidgets.QPlainTextEdit):
             top = bottom
             bottom = top + self.blockBoundingRect(block).height()
             blockNumber += 1
-
-    # @try_except
-    # def highlightCurrentLine(self):
-    #     extraSelections = []
-    #
-    #
-    #     if not self.isReadOnly():
-    #         selection = QtWidgets.QTextEdit.ExtraSelection()
-    #
-    #         lineColor = QtGui.QColor(QtCore.Qt.yellow).lighter(160)
-    #
-    #         selection.format.setBackground(lineColor)
-    #         selection.format.setProperty(QtGui.QTextFormat.FullWidthSelection, True)
-    #         selection.cursor = self.textCursor()
-    #         selection.cursor.clearSelection()
-    #         extraSelections.append(selection)
-    #     self.setExtraSelections(extraSelections)
 
